@@ -17,7 +17,7 @@ Features Include
   - Get students who failed
   - Get students who passed
   - Show students from highest scoring to lowest
-  - Dowload result list as a text file
+  - Save result list as a text file
   - Desktop and Web site available
   - Database storage for results (web version)
 
