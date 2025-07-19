@@ -6,7 +6,7 @@ This repo consist of three main parts
 
 `grade_analyzer.php` A student grade analyzer written in php.
 
-`grade_analyzer_db.php` A student grade analyzer website written in php with database storage.
+`grade_analyzer_db.php` A student grade analyzer website written in php with database storage. [Try it out](https://meshanthony.name.ng/student-grade-analyzer/grade_analyzer_db.php)
 
 It allows you to enter students grade records so you can easy analyse the data efficiently
 
