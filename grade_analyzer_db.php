@@ -7,7 +7,7 @@
     $_SESSION['page'] = "amount_of_entries";
   }
 
-  function fetch_results($sql = "SELECT student_name, score FROM students WHERE session_id = ?"){
+  function fetch_results($sql = "SELECT student_id, student_name, score FROM students WHERE session_id = ?"){
     try{
       $db_conn = new PDO(
         "pgsql:host=".$_SERVER["DB_SERVER_NAME"].";dbname=".$_SERVER["DB_NAME"], 
@@ -62,14 +62,20 @@
   }
 
   function save_in_file(){
+    $left_spacing = 16;
     $student_list = fetch_results();
     $result_file = fopen("results.txt", "w");
-    fwrite($result_file, "Name".spacing(4)."Score\n");
+    fwrite($result_file, 
+      "Student Id".join("", array_fill(0, $left_spacing - 10, " ")).
+      "Name".join("", array_fill(0, $left_spacing - 4, " "))."Score\n"
+    );
     foreach($student_list as $student){
       fwrite(
-        $result_file, 
-        $student['name'].
-        join("", array_fill(0, $left_spacing - strlen($student['name']), " ")).
+        $result_file,
+        $student['student_id'].
+        join("", array_fill(0, $left_spacing - strlen($student['student_id']), " ")).
+        $student['student_name'].
+        join("", array_fill(0, $left_spacing - strlen($student['student_name']), " ")).
         $student['score']."\n"
       );
     }
@@ -100,12 +106,13 @@
         $_SESSION['page'] = "management_menu";
       }
     }
+    header("Location: ".$_SERVER['PHP_SELF']);
   }
 
   if(isset($_GET['action'])){
     switch($_GET['action']){
       case "show_average_score":
-        $_SESSION["extra"] = "The Average Score Is: " . get_average_score();
+        $_SESSION["extra"] = "<div style=\"text-align: center; font-family: monospace;\">The Average Score Is: " . get_average_score() . "</div>";
         break;
       case "show_students_with_highest_score":
         $_SESSION["student_list"] = fetch_students_with_highest_score();
@@ -120,9 +127,8 @@
         $_SESSION["student_list"] = fetch_sorted_results();
         break;
       case "save_result_to_text_file":
-        //handle with javascript
-        //header("Location: ".$_SERVER['REQUEST_SCHEME']."://".$_SERVER['HTTP_HOST']."/results.txt");
-        exit;
+        save_in_file();
+        break;
       case "add_new_entry":
         $_SESSION['page'] = "amount_of_entries";
         header("Location: ".$_SERVER['PHP_SELF']);
@@ -134,58 +140,84 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Student Grade Analyzer</title>
     <style>
-      table, th, td{border: 0.5px solid black;}
+      table{
+        margin-left: auto;
+        margin-right: auto;
+      }
+      th{font-family: sans-serif;}
+      table, th, td{border: 1px solid black;}
+      h1{
+        font-family: monospace;
+        margin-top: 10px;
+        margin-bottom: 10px;
+        text-align: center;
+      }
+      form{text-align: center;}
+      a{
+        text-decoration: none;
+        font-family: monospace;
+        font-size: 15px;
+      }
     </style>
   </head>
   <body>
     <h1>Student Grade Analyzer</h1>
+    <script>
+      if(window.location.href.includes("save_result_to_text_file")){
+        const download_link = document.createElement("a");
+        download_link.href = window.location.origin + "/results.txt";
+        download_link.download = "results.txt";
+        download_link.click();
+        URL.revokeObjectURL(download_link.href);
+      }
+    </script>
     <?php if($_SESSION['page'] == "amount_of_entries"):?>
       <form method="POST" action="">
-        How many students do you want to add: 
-        <input type="number" name="number_of_entries" placeholder="1" style="width: 60px;">
-        <button type="submit">Add Entries</button>
+        <div style="font-family: sans-serif;">How many students do you want to add: <input type="number" name="number_of_entries" placeholder="1" style="width: 60px;"></div>
+        <button type="submit" style="margin-top: 5px;">Add Entries</button>
       </form>
     <?php elseif($_SESSION['page'] == "add_new_students"):?>
-      <?php echo $_SESSION['added']."/".$_SESSION['to_add']?> Entries to add
       <form method="POST" action="">
-        Enter student name: <input type="text" placeholder="James Brown" name="student_name"><br>
-        <div style="margin-top: 5px;"></div>
-        Enter student score: <input type="number" placeholder="70.5" name="student_score" step="any">
+        <div style="font-family: monospace; font-size: 15px; margin-bottom: 5px;"><?php echo $_SESSION['added']."/".$_SESSION['to_add']?> Entries to add<br></div>
+        <div style="font-family: sans-serif; margin-bottom: 5px;">Enter student name: <input type="text" placeholder="James Brown" name="student_name"><br></div>
+        <div style="font-family: sans-serif; margin-bottom: 5px;">Enter student score: <input type="number" placeholder="70.5" name="student_score" step="any"><br></div>
         <button type="submit">Add Student</button>
       </form>
     <?php else:?>
-      <a href="?action=show_average_score" style="margin-left: 10px; font-size: 16px;">Show Average Score</a><br>
-      <a href="?action=show_students_with_highest_score" style="margin-left: 10px; font-size: 16px;">Show Names Of Students With The Highest Score</a><br>
-      <a href="?action=show_students_who_passed" style="margin-left: 10px; font-size: 16px;">Show the Number of Students Who Passed (Score >= 50)</a><br>
-      <a href="?action=show_students_who_failed" style="margin-left: 10px; font-size: 16px;">Show the Number of Students Who Failed</a><br>
-      <a href="?action=show_sorted_list" style="margin-left: 10px; font-size: 16px;">Show Sorted Result List</a><br>
-      <a href="?action=save_result_to_text_file" style="margin-left: 10px; font-size: 16px;">Save Result to Text File</a><br>
-      <a href="?action=add_new_entry" style="margin-left: 10px; font-size: 16px;">Add New Students</a><br>
-      <?php if(!is_null($_SESSION["extra"])):?>
-        <div><?php echo $_SESSION['extra'];?></div>
-      <?php endif;?>
+      <div style="text-align: center;">
+        <a href="?action=show_average_score">Show Average Score</a><br>
+        <a href="?action=show_students_with_highest_score">Show Names Of Students With The Highest Score</a><br>
+        <a href="?action=show_students_who_passed">Show the Number of Students Who Passed (Score >= 50)</a><br>
+        <a href="?action=show_students_who_failed">Show the Number of Students Who Failed</a><br>
+        <a href="?action=show_sorted_list">Show Sorted Result List</a><br>
+        <a href="?action=save_result_to_text_file">Save Result to Text File</a><br>
+        <a href="?action=add_new_entry">Add New Students</a><br><br>
+        <?php if(!is_null($_SESSION["extra"])):?>
+          <div><?php echo $_SESSION['extra'];?></div>
+        <?php endif;?>
+      </div>
     <?php endif;?>
 
-    <div style="margin-top: 30%;"></div>
-
+    <div style="margin-top: 10%;"></div>
     <?php $students = !is_null($_SESSION['student_list']) ? $_SESSION['student_list'] : fetch_results();?>
     <?php if(count($students) != 0):?>
-      <table style="width: 40%; ">
+      <table style="width: 80%; text-align: center;">
         <tr>
-          <th>Student Name</th>
-          <th>Score</th>
+          <th style="font-family: monospace;">Student Name</th>
+          <th style="font-family: monospace;">Score</th>
         </tr>
         <?php foreach($students as $student):?>
           <tr>
             <td><?php echo $student["student_name"]?></td>
-            <td><?php echo $student["score"]?></td>
+            <td style="font-family: sans-serif;"><?php echo $student["score"]?></td>
           </tr>
         <?php endforeach;?>
       </table>
     <?php else:?>
-      No Students Found
+      <div style="text-align: center; font-family: monospace; font-size: 20px;">No Students Found</div>
     <?php endif;?>
   <body>
 </html>
