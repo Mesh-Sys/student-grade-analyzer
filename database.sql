@@ -1,5 +1,5 @@
 -- create table to store students and scores
--- this follows postgresql syntax
+-- this follows postgresql syntax for types
 CREATE TABLE IF NOT EXISTS students (
 	student_id SERIAL PRIMARY KEY,
 	student_name VARCHAR(255) NOT NULL,
