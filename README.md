@@ -64,7 +64,7 @@ in your cloned directory and execute
 php grade_analyzer.php
 ```
 
-## grade_analyzer_db.php
+## grade_analyzer_db.php [Try it out](https://meshanthony.name.ng/student-grade-analyzer/grade_analyzer_db.php)
 
 To run this file if you would need a http webserver (e.g nginx, apache) with php installed and configure,
 
